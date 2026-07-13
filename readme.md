@@ -1,4 +1,4 @@
-USE THE FOLLOWING COMMAND:
+USE THE FOLLOWING COMMAND:<br>
 to run the application
 
-python app.py
+```python app.py```
