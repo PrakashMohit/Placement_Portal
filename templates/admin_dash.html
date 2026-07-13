@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dash.css') }}">
+</head>
+<body>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Admin panel</p>
+            <h1>Placement Admin Dashboard</h1>
+            <p class="subtext">Track totals, review approvals, manage accounts, and inspect every drive and application from one place.</p>
+        </div>
+        <div class="header-actions">
+            <span class="pill">{{ session['name'] }}</span>
+            <a class="btn btn-dark" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <section class="flash-bar">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </section>
+        {% endif %}
+    {% endwith %}
+
+    <section class="stats-grid">
+        <article class="stat-card"><p>Total Students</p><h2>{{ metrics.students }}</h2></article>
+        <article class="stat-card"><p>Total Companies</p><h2>{{ metrics.companies }}</h2></article>
+        <article class="stat-card"><p>Total Applications</p><h2>{{ metrics.applications }}</h2></article>
+        <article class="stat-card"><p>Total Placement Drives</p><h2>{{ metrics.drives }}</h2></article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>Search Records</h2>
+                <p>Search students by name or student ID and companies by Name</p>
+            </div>
+            {% if show_student_results_only or show_company_results_only %}
+                <a class="btn btn-secondary" href="{{ url_for('admin_dash') }}">Clear Search</a>
+            {% endif %}
+        </div>
+        <div class="search-row">
+            <form method="GET" class="search-form">
+                <label>Student Name or ID
+                    <input type="text" name="student_search" value="{{ student_search }}" placeholder="Name or roll-number ID">
+                </label>
+                <input type="hidden" name="company_search" value="{{ company_search }}">
+                <button class="btn" type="submit">Search Students</button>
+            </form>
+
+            <form method="GET" class="search-form">
+                <label>Search Companies by Name
+                    <input type="text" name="company_search" value="{{ company_search }}" placeholder="Company name">
+                </label>
+                <input type="hidden" name="student_search" value="{{ student_search }}">
+                <button class="btn" type="submit">Search Companies</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>Departments</h2>
+                <p>Create or Delete departments</p>
+            </div>
+        </div>
+        <div class="department-layout">
+            <form method="POST" class="search-form">
+                <input type="hidden" name="action" value="create_department">
+                <label>New Department
+                    <input type="text" name="department_name" placeholder="Department name" required>
+                </label>
+                <button class="btn" type="submit">Add Department</button>
+            </form>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Department</th>
+                            <th>Students</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for department in departments %}
+                            <tr>
+                                <td>{{ department.name }}</td>
+                                <td>{{ department.student_count }}</td>
+                                <td>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="delete_department">
+                                        <input type="hidden" name="department_id" value="{{ department.id }}">
+                                        <button class="btn btn-danger" type="submit" onclick="return confirm('Delete this department from the selectable list?')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="3">No departments available.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    {% if not show_student_results_only and not show_company_results_only %}
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>Pending Company Registrations</h2>
+                <p>Approve or reject new registrations, Manage companies here</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Contact</th>
+                        <th>Profile</th>
+                        <th>Decision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in pending_companies %}
+                        <tr>
+                            <td>{{ company.id }}</td>
+                            <td><strong>{{ company.name }}</strong><div class="muted-line">@{{ company.username }}</div></td>
+                            <td>{{ company.email }}<br>{{ company.phone }}</td>
+                            <td class="profile-snippet">{{ company.details }}</td>
+                            <td>
+                                <div class="inline-actions">
+                                    <a class="btn btn-secondary" href="{{ url_for('admin_company_profile', company_id=company.id) }}">View Profile</a>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="company_approval">
+                                        <input type="hidden" name="company_id" value="{{ company.id }}">
+                                        <input type="hidden" name="decision" value="approved">
+                                        <button class="btn btn-success" type="submit">Approve</button>
+                                    </form>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="company_approval">
+                                        <input type="hidden" name="company_id" value="{{ company.id }}">
+                                        <input type="hidden" name="decision" value="rejected">
+                                        <button class="btn btn-danger" type="submit">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">No pending company registrations.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>Pending Placement Drives</h2>
+                <p>Review new placement drives submitted by approved companies.</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Drive</th>
+                        <th>Date</th>
+                        <th>Decision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in pending_drives %}
+                        <tr>
+                            <td>{{ drive.id }}</td>
+                            <td>{{ drive.company_name }}</td>
+                            <td><strong>{{ drive.title }}</strong><div class="muted-line">{{ drive.job_role }} | {{ drive.location }}</div></td>
+                            <td>{{ drive.drive_date }}</td>
+                            <td>
+                                <div class="inline-actions">
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="drive_approval">
+                                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                                        <input type="hidden" name="decision" value="approved">
+                                        <button class="btn btn-success" type="submit">Approve</button>
+                                    </form>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="drive_approval">
+                                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                                        <input type="hidden" name="decision" value="rejected">
+                                        <button class="btn btn-danger" type="submit">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">No pending drives.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if not show_company_results_only %}
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>Students</h2>
+                <p>Manage Students Here Blacklisted: Log-in and edit profile only Deactivated: Cannot log in</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Profile</th>
+                        <th>Department</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th>Account actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>{{ student.roll_number }}</td>
+                            <td><strong>{{ student.name }}</strong><div class="muted-line">{{ student.username }}</div><a class="table-link" href="{{ url_for('admin_student_profile', student_id=student.id) }}">View Profile</a></td>
+                            <td>{{ student.department }}</td>
+                            <td>{{ student.email }}<br>{{ student.phone }}</td>
+                            <td><span class="status-chip status-{{ student.account_status }}">{{ student.account_status }}</span></td>
+                            <td>
+                                <div class="stack-actions">
+                                    <form method="POST" class="status-form">
+                                        <input type="hidden" name="action" value="student_account">
+                                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                                        <select name="status">
+                                            <option value="active" {% if student.account_status == 'active' %}selected{% endif %}>active</option>
+                                            <option value="blacklisted" {% if student.account_status == 'blacklisted' %}selected{% endif %}>blacklisted</option>
+                                            <option value="deactivated" {% if student.account_status == 'deactivated' %}selected{% endif %}>deactivated</option>
+                                        </select>
+                                        <button class="btn" type="submit">Save Status</button>
+                                    </form>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="delete_student">
+                                        <input type="hidden" name="student_id" value="{{ student.id }}">
+                                        <button class="btn btn-danger" type="submit" onclick="return confirm('Delete this student and all related applications?')">Delete Student</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">No students found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if not show_student_results_only %}
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>Companies</h2>
+                <p>Manage Companies Here Blacklisted: Can log in and edit profile only Deactivated: Cannot log in</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Contact</th>
+                        <th>Registration Status</th>
+                        <th>Account</th>
+                        <th>Account actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                        <tr>
+                            <td>{{ company.id }}</td>
+                            <td>
+                                <strong>{{ company.name }}</strong>
+                                <div class="muted-line">{{ company.username }}</div>
+                                <a class="table-link" href="{{ url_for('admin_company_profile', company_id=company.id) }}">View Profile</a>
+                            </td>
+                            <td>{{ company.email }}<br>{{ company.phone }}</td>
+                            <td>
+                                <span class="status-chip status-{{ company.approval_status }}">{{ company.approval_status }}</span>
+                                <form method="POST" class="status-form inline-form">
+                                    <input type="hidden" name="action" value="company_status">
+                                    <input type="hidden" name="company_id" value="{{ company.id }}">
+                                    <select name="status">
+                                        <option value="pending" {% if company.approval_status == 'pending' %}selected{% endif %}>pending</option>
+                                        <option value="approved" {% if company.approval_status == 'approved' %}selected{% endif %}>approved</option>
+                                        <option value="rejected" {% if company.approval_status == 'rejected' %}selected{% endif %}>rejected</option>
+                                    </select>
+                                    <button class="btn" type="submit">Save</button>
+                                </form>
+                            </td>
+                            <td><span class="status-chip status-{{ company.account_status }}">{{ company.account_status }}</span></td>
+                            <td>
+                                <div class="stack-actions">
+                                    <form method="POST" class="status-form">
+                                        <input type="hidden" name="action" value="company_account">
+                                        <input type="hidden" name="company_id" value="{{ company.id }}">
+                                        <select name="status">
+                                            <option value="active" {% if company.account_status == 'active' %}selected{% endif %}>active</option>
+                                            <option value="blacklisted" {% if company.account_status == 'blacklisted' %}selected{% endif %}>blacklisted</option>
+                                            <option value="deactivated" {% if company.account_status == 'deactivated' %}selected{% endif %}>deactivated</option>
+                                        </select>
+                                        <button class="btn" type="submit">Save Status</button>
+                                    </form>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="delete_company">
+                                        <input type="hidden" name="company_id" value="{{ company.id }}">
+                                        <button class="btn btn-danger" type="submit" onclick="return confirm('Delete this company, its drives, and applications?')">Delete Company</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">No companies found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if not show_student_results_only and not show_company_results_only %}
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>All Placement Drives</h2>
+                <p>Manage and approve placement drive here</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Drive</th>
+                        <th>Status</th>
+                        <th>Dates</th>
+                        <th>Approval Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drive in all_drives %}
+                        <tr>
+                            <td>{{ drive.id }}</td>
+                            <td>{{ drive.company_name }}</td>
+                            <td><strong>{{ drive.title }}</strong><div class="muted-line">{{ drive.job_role }} | {{ drive.location }} | {{ drive.salary }}</div></td>
+                            <td><span class="status-chip status-{{ drive.approval_status }}">{{ drive.approval_status }}</span><div class="muted-line">Lifecycle: {{ drive.lifecycle_status }}</div></td>
+                            <td>Drive: {{ drive.drive_date }}<br>Apply by: {{ drive.last_date_to_apply }}</td>
+                            <td>
+                                <div class="inline-actions">
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="drive_approval">
+                                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                                        <input type="hidden" name="decision" value="approved">
+                                        <button class="btn btn-success" type="submit">Approve</button>
+                                    </form>
+                                    <form method="POST">
+                                        <input type="hidden" name="action" value="drive_approval">
+                                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                                        <input type="hidden" name="decision" value="rejected">
+                                        <button class="btn btn-danger" type="submit">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6">No drives created yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <div>
+                <h2>All Applications</h2>
+                <p>Complete placement application history across all companies and students.</p>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Student</th>
+                        <th>Company</th>
+                        <th>Drive</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Remark</th>
+                        <th>Applied At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in all_applications %}
+                        <tr>
+                            <td>{{ application.id }}</td>
+                            <td><strong>{{ application.student_name }}</strong><div class="muted-line">{{ application.department }}</div></td>
+                            <td>{{ application.company_name }}</td>
+                            <td>{{ application.drive_title }}</td>
+                            <td>{{ application.job_role }}</td>
+                            <td>{{ application.status }}</td>
+                            <td>{{ application.remark or '-' }}</td>
+                            <td>{{ application.applied_at }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8">No applications yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+</body>
+</html>

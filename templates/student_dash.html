@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='student_dash.css') }}">
+</head>
+<body>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">dashboard</p>
+            <h1>{{ student.name }}</h1>
+            <p class="subtext">View approved drives, apply once per drive, check status, and keep your placement history in one place.</p>
+        </div>
+        <div class="header-actions">
+            <span class="pill">{{ student.roll_number }}</span>
+            <span class="pill">{{ student.department }}</span>
+            <a class="btn btn-secondary" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <section class="flash-bar">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </section>
+        {% endif %}
+    {% endwith %}
+
+    {% if student.account_status == 'blacklisted' %}
+        <section class="flash-bar warning-bar">
+            <p>Your account is blacklisted. You can log in and update your profile, but you cannot apply for placement drives.</p>
+        </section>
+    {% endif %}
+
+    <section class="dashboard-grid">
+        <article class="panel">
+            <h2>Edit Profile</h2>
+            <form method="POST" enctype="multipart/form-data" class="form-grid">
+                <input type="hidden" name="action" value="update_profile">
+
+                <label>Full Name
+                    <input type="text" name="name" value="{{ student.name }}" required>
+                </label>
+
+                <label>Email
+                    <input type="email" name="email" value="{{ student.email }}" required>
+                </label>
+
+                <label>Phone
+                    <input type="text" name="phone" value="{{ student.phone }}" required>
+                </label>
+
+                <label>Department
+                    <select name="department" required>
+                        {% for department in departments %}
+                            <option value="{{ department.name }}" {% if student.department == department.name %}selected{% endif %}>{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label>Study Year
+                    <input type="text" name="study_year" value="{{ student.study_year }}" required>
+                </label>
+
+                <label>Gender
+                    <select name="gender">
+                        <option value="Male" {% if student.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if student.gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if student.gender == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </label>
+
+                <label>CGPA
+                    <input type="text" name="cgpa" value="{{ student.cgpa }}" required>
+                </label>
+
+                <label>Resume
+                    <input type="file" name="resume">
+                </label>
+
+                <div class="resume-row full-width">
+                    {% if student.resume_path %}
+                        <a href="{{ url_for('static', filename=student.resume_path) }}" target="_blank">View Current Resume</a>
+                    {% else %}
+                        <span>No resume uploaded yet.</span>
+                    {% endif %}
+                </div>
+
+                <button class="btn full-width" type="submit">Save Profile</button>
+            </form>
+        </article>
+
+        <article class="panel2">
+            <h2>Applied Drives and Current Status</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Drive</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Remark</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for application in applied_drives %}
+                            <tr>
+                                <td>{{ application.company_name }}</td>
+                                <td>{{ application.drive_title }}</td>
+                                <td>{{ application.job_role }}</td>
+                                <td>{{ application.status }}</td>
+                                <td>{{ application.remark }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5">No applications yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <h2>Approved Placement Drives</h2>
+        <div class="drive-grid">
+            {% for drive in available_drives %}
+                <article class="drive-card">
+                    <p class="company-name">{{ drive.company_name }}</p>
+                    <h3>{{ drive.title }}</h3>
+                    <p><strong>Role:</strong> {{ drive.job_role }}</p>
+                    <p><strong>Location:</strong> {{ drive.location }}</p>
+                    <p><strong>Salary:</strong> {{ drive.salary }}</p>
+                    <p><strong>Drive Date:</strong> {{ drive.drive_date }}</p>
+                    <p><strong>Apply Before:</strong> {{ drive.last_date_to_apply }}</p>
+                    <p class="description">{{ drive.description }}</p>
+
+                    <form method="POST">
+                        <input type="hidden" name="action" value="apply_drive">
+                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                        <button
+                            class="btn {% if drive.application_id %}btn-muted{% endif %}"
+                            type="submit"
+                            {% if drive.application_id %}disabled aria-disabled="true"{% endif %}
+                        >
+                            {% if drive.application_id %}Applied{% else %}Apply{% endif %}
+                        </button>
+                    </form>
+                </article>
+            {% else %}
+                <p class="empty-note">No approved open drives are available right now.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Past Placement History</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Applied At</th>
+                        <th>Company</th>
+                        <th>Drive</th>
+                        <th>Role</th>
+                        <th>Location</th>
+                        <th>Salary</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in applied_drives %}
+                        <tr>
+                            <td>{{ application.applied_at }}</td>
+                            <td>{{ application.company_name }}</td>
+                            <td>{{ application.drive_title }}</td>
+                            <td>{{ application.job_role }}</td>
+                            <td>{{ application.location }}</td>
+                            <td>{{ application.salary }}</td>
+                            <td>{{ application.status }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7">No placement history available yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</body>
+</html>

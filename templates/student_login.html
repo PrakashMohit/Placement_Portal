@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body class="auth-page student-theme">
+    <main class="auth-layout">
+         <h1 class="main-title">Student Login</h1>
+        
+
+        <section class="auth-card wide-card">
+            <h2>Student Sign In</h2>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-box">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" class="auth-form">
+                <label>Username
+                    <input type="text" name="username" required>
+                </label>
+
+                <label>Password
+                    <input type="password" name="password" required>
+                </label>
+
+                <button type="submit">Login</button>
+            </form>
+            <a class="simple-link" href="{{ url_for('student_register') }}">Need an account? Register here</a>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,85 @@
+body{
+margin: 0;
+padding: 0;
+height: 100vh;
+background-image: url("./images/student_register.avif"); 
+background-size: cover;        
+background-repeat: no-repeat;  
+background-position: center;   
+background-attachment: fixed;  
+  
+background-color: black;   
+text-align: center;
+font-family: sans-serif;
+text-align: center;
+font-size: larger;
+}
+
+#title{
+    
+    text-decoration: underline;
+}
+
+#description{
+    
+    text-decoration: underline;
+}
+
+label{
+  display:block;
+  margin: 20px;
+  text-align: left;
+  max-width: 100%;
+  max-height: 50%;
+  font-size: larger;
+  
+}
+
+#field{
+  border-radius: 25px;
+  border-color: black;
+  border-width: 5px;
+  max-width: 70vw;
+  margin-left:  20vw;
+  margin-right: 20vw;
+ 
+}
+
+#name,#password,#username,#confirm-password,#study_year,#Resume,#email,#number,#gender,#cgpa{
+  border-radius: 10px;
+  font-size: 23px;
+  width: 30vw;
+  display: block;
+  
+}
+
+
+#a-href{
+  color: blue;
+  text-decoration: underline;
+}
+
+#a-href:hover{
+  cursor: pointer;
+}
+
+#submit{
+width: 60vw;
+background-color:white;
+border-color: green;
+border-width:5px ;
+color: black;
+height:6%;
+font-size:15px;
+margin-top: 15px;
+font-size: larger;
+border-radius: 25px;
+margin-bottom: 30vh;
+
+}
+
+#submit:hover{
+background-color: green;
+color:aliceblue;
+
+}

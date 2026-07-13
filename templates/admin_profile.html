@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Profile View</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dash.css') }}">
+</head>
+<body>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Admin profile view</p>
+            <h1>{% if profile_type == 'student' %}{{ profile.name }}{% else %}{{ profile.name }}{% endif %}</h1>
+            <p class="subtext">{% if profile_type == 'student' %}Detailed student profile and application history.{% else %}Detailed company profile and drive history.{% endif %}</p>
+        </div>
+        <div class="header-actions">
+            <a class="btn btn-secondary" href="{{ url_for('admin_dash') }}">Back to Dashboard</a>
+            <a class="btn btn-dark" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </header>
+
+    <section class="panel profile-grid">
+        {% if profile_type == 'student' %}
+            <article class="info-card">
+                <h2>Student Profile</h2>
+                <div class="info-list">
+                    <p><strong>Student ID:</strong> {{ profile.roll_number }}</p>
+                    <p><strong>Username:</strong> {{ profile.username }}</p>
+                    <p><strong>Email:</strong> {{ profile.email }}</p>
+                    <p><strong>Phone:</strong> {{ profile.phone }}</p>
+                    <p><strong>Department:</strong> {{ profile.department }}</p>
+                    <p><strong>Study Year:</strong> {{ profile.study_year }}</p>
+                    <p><strong>Gender:</strong> {{ profile.gender }}</p>
+                    <p><strong>CGPA:</strong> {{ profile.cgpa }}</p>
+                    <p><strong>Status:</strong> {{ profile.account_status }}</p>
+                    <p><strong>Applications:</strong> {{ profile.application_count }}</p>
+                </div>
+                {% if profile.resume_path %}
+                    <a class="btn" href="{{ url_for('static', filename=profile.resume_path) }}" target="_blank">View Resume</a>
+                {% endif %}
+            </article>
+
+            <article class="info-card">
+                <h2>Application History</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Drive</th>
+                                <th>Status</th>
+                                <th>Applied At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for application in applications %}
+                                <tr>
+                                    <td>{{ application.company_name }}</td>
+                                    <td>{{ application.drive_title }}</td>
+                                    <td>{{ application.status }}</td>
+                                    <td>{{ application.applied_at }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4">No applications found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        {% else %}
+            <article class="info-card">
+                <h2>Company Profile</h2>
+                <div class="info-list">
+                    <p><strong>Username:</strong> {{ profile.username }}</p>
+                    <p><strong>Email:</strong> {{ profile.email }}</p>
+                    <p><strong>Phone:</strong> {{ profile.phone }}</p>
+                    <p><strong>Website:</strong> {{ profile.website or '-' }}</p>
+                    <p><strong>Approval:</strong> {{ profile.approval_status }}</p>
+                    <p><strong>Account:</strong> {{ profile.account_status }}</p>
+                    <p><strong>Total Drives:</strong> {{ profile.drive_count }}</p>
+                    <p><strong>Total Applications:</strong> {{ profile.application_count }}</p>
+                </div>
+                <p class="profile-copy">{{ profile.details }}</p>
+            </article>
+
+            <article class="info-card">
+                <h2>Drive History</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Role</th>
+                                <th>Approval</th>
+                                <th>Applicants</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for drive in drives %}
+                                <tr>
+                                    <td>{{ drive.title }}</td>
+                                    <td>{{ drive.job_role }}</td>
+                                    <td>{{ drive.approval_status }}</td>
+                                    <td>{{ drive.applicant_count }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4">No drives found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        {% endif %}
+    </section>
+</body>
+</html>

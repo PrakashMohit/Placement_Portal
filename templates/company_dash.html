@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='company_dash.css') }}">
+</head>
+<body>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Dashboard</p>
+            <h1>{{ company.name }}</h1>
+            <p class="subtext">Manage company details, create drives after approval, and update student application status.</p>
+        </div>
+        <div class="header-actions">
+            <div class="status-box">
+                <span class="pill">Registration Status: {{ company.approval_status }}</span>
+                <span class="pill">Account: {{ company.account_status }}</span>
+            </div>
+            <a class="btn btn-secondary" href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <section class="flash-bar">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </section>
+        {% endif %}
+    {% endwith %}
+
+    <section class="dashboard-grid">
+        <article class="panel1">
+            <h2>Company Profile</h2>
+            <form method="POST" class="form-grid">
+                <input type="hidden" name="action" value="update_profile">
+
+                <label>Company Name
+                    <input type="text" name="name" value="{{ company.name }}" required>
+                </label>
+
+                <label>Email
+                    <input type="email" name="email" value="{{ company.email }}" required>
+                </label>
+
+                <label>Phone
+                    <input type="text" name="phone" value="{{ company.phone }}" required>
+                </label>
+
+                <label>Website
+                    <input type="text" name="website" value="{{ company.website }}">
+                </label>
+
+                <label class="full-width">Details
+                    <textarea name="details" rows="5" required>{{ company.details }}</textarea>
+                </label>
+
+                <button class="full-width" type="submit">Update Profile</button>
+            </form>
+        </article>
+
+        <article class="panel2">
+            <h2>Create New Drive</h2>
+            {% if company_is_limited %}
+                <p class="warning-note">This company is blacklisted. You can edit the profile, but you cannot create, change, close, or delete drives.</p>
+            {% elif company.approval_status != 'approved' or company.account_status != 'active' %}
+                <p class="warning-note">Only approved active companies can create placement drives.</p>
+            {% endif %}
+
+            <form method="POST" class="form-grid">
+                <input type="hidden" name="action" value="create_drive">
+
+                <label>Drive Title
+                    <input type="text" name="title" required>
+                </label>
+
+                <label>Job Role
+                    <input type="text" name="job_role" required>
+                </label>
+
+                <label>Location
+                    <input type="text" name="location" required>
+                </label>
+
+                <label>Salary
+                    <input type="text" name="salary" required>
+                </label>
+
+                <label>Drive Date
+                    <input type="date" name="drive_date" required>
+                </label>
+
+                <label>Last Date To Apply
+                    <input type="date" name="last_date_to_apply" required>
+                </label>
+
+                <label class="full-width">Description
+                    <textarea name="description" rows="5" required></textarea>
+                </label>
+
+                <button class="btn full-width" type="submit">Create Drive</button>
+            </form>
+        </article>
+    </section>
+
+    <section class="panel">
+        <h2>Created Placement Drives</h2>
+        {% for drive in drives %}
+            <div class="drive-card">
+                <div class="drive-head">
+                    <div>
+                        <h3>{{ drive.title }}</h3>
+                        <p>{{ drive.job_role }} | {{ drive.location }} | {{ drive.salary }}</p>
+                    </div>
+                    <div class="drive-meta">
+                        <span>Applicants: {{ drive.applicant_count }}</span>
+                        <span>Approval: {{ drive.approval_status }}</span>
+                        <span>Lifecycle: {{ drive.lifecycle_status }}</span>
+                    </div>
+                </div>
+
+                <form method="POST" class="form-grid edit-drive-form">
+                    <input type="hidden" name="action" value="edit_drive">
+                    <input type="hidden" name="drive_id" value="{{ drive.id }}">
+
+                    <label>Title
+                        <input type="text" name="title" value="{{ drive.title }}" required>
+                    </label>
+
+                    <label>Job Role
+                        <input type="text" name="job_role" value="{{ drive.job_role }}" required>
+                    </label>
+
+                    <label>Location
+                        <input type="text" name="location" value="{{ drive.location }}" required>
+                    </label>
+
+                    <label>Salary
+                        <input type="text" name="salary" value="{{ drive.salary }}" required>
+                    </label>
+
+                    <label>Drive Date
+                        <input type="date" name="drive_date" value="{{ drive.drive_date }}" required>
+                    </label>
+
+                    <label>Last Date To Apply
+                        <input type="date" name="last_date_to_apply" value="{{ drive.last_date_to_apply }}" required>
+                    </label>
+
+                    <label class="full-width">Description
+                        <textarea name="description" rows="4" required>{{ drive.description }}</textarea>
+                    </label>
+
+                    <button class="btn" type="submit">Save Changes</button>
+                </form>
+
+                <div class="inline-actions">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="close_drive">
+                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                        <button class="btn btn-muted" type="submit">Close Drive</button>
+                    </form>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="delete_drive">
+                        <input type="hidden" name="drive_id" value="{{ drive.id }}">
+                        <button class="btn btn-danger" type="submit">Remove Drive</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <p class="empty-note">No drives created yet.</p>
+        {% endfor %}
+    </section>
+
+    <section class="panel">
+        <h2>Student Applications</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Department</th>
+                        <th>CGPA</th>
+                        <th>Drive</th>
+                        <th>Role</th>
+                        <th>Resume</th>
+                        <th>Current Status</th>
+                        <th>Update Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in applications %}
+                        <tr>
+                            <td>{{ application.student_name }}</td>
+                            <td>{{ application.department }}</td>
+                            <td>{{ application.cgpa }}</td>
+                            <td>{{ application.drive_title }}</td>
+                            <td>{{ application.job_role }}</td>
+                            <td>
+                                {% if application.resume_path %}
+                                    <a href="{{ url_for('static', filename=application.resume_path) }}" target="_blank">View Resume</a>
+                                {% else %}
+                                    No Resume
+                                {% endif %}
+                            </td>
+                            <td>{{ application.status }}</td>
+                            <td>
+                                <form method="POST" class="status-form">
+                                    <input type="hidden" name="action" value="update_application_status">
+                                    <input type="hidden" name="application_id" value="{{ application.id }}">
+                                    <select name="status">
+                                        <option value="Applied" {% if application.status == 'Applied' %}selected{% endif %}>Applied</option>
+                                        <option value="Shortlisted" {% if application.status == 'Shortlisted' %}selected{% endif %}>Shortlisted</option>
+                                        <option value="Selected" {% if application.status == 'Selected' %}selected{% endif %}>Selected</option>
+                                        <option value="Rejected" {% if application.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                    </select>
+                                    <input type="text" name="remark" value="{{ application.remark }}" placeholder="Remark">
+                                    <button class="btn" type="submit">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8">No applications yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</body>
+</html>
